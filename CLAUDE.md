@@ -113,7 +113,7 @@ finance-cli retire --strategy 4percent --years 30 --seed 42  # Example run
 
 ### Test Organization
 - `tests/core/` - Core engine tests
-- `tests/strategies/` - Strategy plugin tests  
+- `tests/strategies/` - Strategy plugin tests
 - `tests/scenarios/` - Simulator tests
 - `tests/cli/` - CLI interface tests
 

@@ -1,9 +1,9 @@
 # Product Requirements Document (PRD)
 ## Financial Analysis Toolkit
 
-**Project codename:** capstone-finance  
-**Maintainer(s):** John Carlson (Product/Dev), open to core contributors  
-**Repo URL:** https://github.com/GGcarlson/Financial-Analysis-Toolkit  
+**Project codename:** capstone-finance
+**Maintainer(s):** John Carlson (Product/Dev), open to core contributors
+**Repo URL:** https://github.com/GGcarlson/Financial-Analysis-Toolkit
 **License:** MIT-0 (MIT with no attribution, to maximise reuse)
 
 ## 1. Vision
