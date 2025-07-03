@@ -13,7 +13,7 @@ An extensible, agent-friendly Python toolkit that lets individuals, advisors, an
 Build a toolkit that is:
 
 - **Composable**: New strategies, simulators, or data feeds drop in via plug-ins—no fork required
-- **Deterministic**: Given a seed + config, results are reproducible across machines  
+- **Deterministic**: Given a seed + config, results are reproducible across machines
 - **Fast**: 10,000 40-year Monte-Carlo paths in < 2 s on a modern laptop
 - **LLM-native**: Public APIs documented with machine-readable DSPy signatures so Claude Code (or any agent) can reason about them
 
@@ -58,7 +58,7 @@ finance-cli retire --strategy 4percent,guyton-klinger --years 30
 ### Strategy Plugins
 - **4% Rule (Bengen)**: Classic fixed withdrawal rate
 - **Constant Percentage**: Dynamic percentage-based withdrawals
-- **Endowment (Yale)**: Moving average approach  
+- **Endowment (Yale)**: Moving average approach
 - **Guyton-Klinger**: Guardrails-based adjustments
 
 ### Scenario Simulators
@@ -76,7 +76,7 @@ finance-cli retire --strategy 4percent,guyton-klinger --years 30
 ```
 capstone_finance/
 ├── core/           # Market simulator, inflation model, cash-flow ledger
-├── strategies/     # Pluggable withdrawal strategies  
+├── strategies/     # Pluggable withdrawal strategies
 ├── scenarios/      # Retirement, refinance, big purchase simulators
 ├── reporting/      # Rich console tables, matplotlib/plotly charts
 ├── cli/            # Typer-based CLI interface
@@ -86,7 +86,7 @@ capstone_finance/
 ## 🔧 Development Setup
 
 ### Prerequisites
-- Python 3.11+ 
+- Python 3.11+
 - Git
 
 ### Setup
@@ -113,7 +113,7 @@ pre-commit install
 # Format code
 black .
 
-# Lint code  
+# Lint code
 ruff check .
 
 # Type checking
@@ -165,8 +165,8 @@ Target performance metrics:
 All public APIs are annotated with DSPy signatures for seamless agent integration:
 
 ```python
-@signature("retirement_analysis", 
-           in_=RetirementParams, 
+@signature("retirement_analysis",
+           in_=RetirementParams,
            out=RetirementResults)
 def analyze_retirement(params: RetirementParams) -> RetirementResults:
     """Analyze retirement portfolio sustainability."""
@@ -177,12 +177,12 @@ JSON manifests are auto-generated to `/signatures` for agent consumption.
 
 ## ⚠️ Financial Disclaimer
 
-**This software is for educational purposes only and does not constitute financial advice.** 
+**This software is for educational purposes only and does not constitute financial advice.**
 
 The calculations and simulations provided by this toolkit are based on historical data and mathematical models that may not accurately predict future market conditions. Users should:
 
 - Consult with qualified financial professionals before making investment decisions
-- Understand that past performance does not guarantee future results  
+- Understand that past performance does not guarantee future results
 - Consider their individual financial situation and risk tolerance
 - Verify all calculations independently
 
@@ -200,7 +200,7 @@ from capstone_finance.strategies import BaseStrategy
 class MyStrategy(BaseStrategy):
     def initial_withdrawal(self, state: YearState) -> float:
         return state.portfolio_value * 0.04
-    
+
     def update_withdrawal(self, state: YearState) -> float:
         return self.last_withdrawal * (1 + state.inflation_rate)
 ```
