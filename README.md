@@ -219,3 +219,5 @@ This project is licensed under the [MIT-0 License](LICENSE) - see the LICENSE fi
 ---
 
 **Built with ❤️ for the financial planning community and LLM agents**
+
+*CI pipeline test - trivial README update*
