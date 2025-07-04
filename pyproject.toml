@@ -68,6 +68,7 @@ dummy = "capstone_finance.strategies.dummy:DummyStrategy"
 four_percent_rule = "capstone_finance.strategies.four_percent_rule:FourPercentRule"
 constant_pct = "capstone_finance.strategies.constant_percentage:ConstantPercentageStrategy"
 endowment = "capstone_finance.strategies.endowment:EndowmentStrategy"
+guyton_klinger = "capstone_finance.strategies.guyton_klinger:GuytonKlingerStrategy"
 
 [project.scripts]
 finance-cli = "capstone_finance.cli:main"
