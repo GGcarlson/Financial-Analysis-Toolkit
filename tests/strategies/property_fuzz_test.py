@@ -165,10 +165,10 @@ class TestStrategyProperties:
         strategy = AVAILABLE_STRATEGIES[strategy_name]()
         withdrawal = strategy.calculate_withdrawal(state, params)
 
-        # For strategies that depend on current balance (like constant_pct),
+        # For strategies that depend on current balance (like constant_pct, endowment),
         # use current balance as the bound. For others, use initial balance.
-        if strategy_name == "constant_pct":
-            # Constant percentage strategy can withdraw up to 100% of current balance
+        if strategy_name in ["constant_pct", "endowment"]:
+            # These strategies can withdraw up to 100% of current balance
             max_reasonable = state.balance * 1.0
         else:
             # Other strategies should not exceed 100% of initial balance per year
