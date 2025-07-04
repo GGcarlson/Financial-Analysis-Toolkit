@@ -1,6 +1,5 @@
 """Tests for FourPercentRule strategy."""
 
-
 from capstone_finance.core.models import PortfolioParams, YearState
 from capstone_finance.strategies.four_percent_rule import FourPercentRule
 

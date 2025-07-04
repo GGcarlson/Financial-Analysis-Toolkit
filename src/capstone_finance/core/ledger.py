@@ -171,6 +171,7 @@ def run_simulation_vectorized(
 
     # Tax engine or no-op
     if tax_engine is None:
+
         def tax_engine(w, b):
             return 0.0
 

@@ -49,6 +49,14 @@ jobs:
       run: |
         mypy src/capstone_finance
 
+    - name: Test notebook execution
+      run: |
+        pytest --nbval examples/retirement_walkthrough.ipynb
+
+    - name: Build documentation
+      run: |
+        mkdocs build --strict
+
     - name: Upload coverage to artifacts
       uses: actions/upload-artifact@v4
       with:

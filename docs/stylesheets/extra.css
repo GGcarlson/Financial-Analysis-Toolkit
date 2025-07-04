@@ -1,0 +1,145 @@
+/* Custom styles for Financial Analysis Toolkit documentation */
+
+/* Code blocks */
+.highlight {
+    margin: 1em 0;
+}
+
+/* Admonitions */
+.admonition {
+    margin: 1.5em 0;
+}
+
+.admonition.warning {
+    border-left: 4px solid #ff9800;
+}
+
+.admonition.note {
+    border-left: 4px solid #2196f3;
+}
+
+.admonition.tip {
+    border-left: 4px solid #4caf50;
+}
+
+/* Tables */
+.md-typeset table:not([class]) {
+    border: 1px solid var(--md-default-fg-color--lightest);
+    border-collapse: collapse;
+}
+
+.md-typeset table:not([class]) th {
+    background-color: var(--md-default-fg-color--lightest);
+    font-weight: 600;
+}
+
+/* API documentation */
+.doc-heading {
+    margin-top: 2em;
+    margin-bottom: 1em;
+    border-bottom: 1px solid var(--md-default-fg-color--lightest);
+    padding-bottom: 0.5em;
+}
+
+/* Financial disclaimers */
+.financial-disclaimer {
+    background-color: var(--md-warning-bg-color);
+    border: 1px solid var(--md-warning-fg-color);
+    border-radius: 4px;
+    padding: 1em;
+    margin: 1.5em 0;
+}
+
+.financial-disclaimer h3 {
+    color: var(--md-warning-fg-color);
+    margin-top: 0;
+}
+
+/* Code examples */
+.code-example {
+    margin: 1.5em 0;
+}
+
+.code-example-title {
+    font-weight: 600;
+    margin-bottom: 0.5em;
+    color: var(--md-accent-fg-color);
+}
+
+/* Navigation enhancements */
+.md-nav__link--active {
+    font-weight: 600;
+}
+
+/* Performance metrics highlighting */
+.performance-metric {
+    background-color: var(--md-code-bg-color);
+    padding: 0.2em 0.4em;
+    border-radius: 3px;
+    font-family: var(--md-code-font);
+    font-size: 0.85em;
+}
+
+/* Strategy comparison tables */
+.strategy-comparison {
+    margin: 2em 0;
+}
+
+.strategy-comparison th {
+    text-align: center;
+    font-weight: 600;
+}
+
+.strategy-comparison td {
+    text-align: center;
+}
+
+/* Success rate indicators */
+.success-rate-high {
+    color: #4caf50;
+    font-weight: 600;
+}
+
+.success-rate-medium {
+    color: #ff9800;
+    font-weight: 600;
+}
+
+.success-rate-low {
+    color: #f44336;
+    font-weight: 600;
+}
+
+/* CLI command examples */
+.cli-example {
+    background-color: var(--md-code-bg-color);
+    border-left: 4px solid var(--md-accent-fg-color);
+    padding: 1em;
+    margin: 1em 0;
+    border-radius: 0 4px 4px 0;
+}
+
+.cli-example code {
+    background-color: transparent;
+    padding: 0;
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 76.1875em) {
+    .md-nav--primary .md-nav__title {
+        background-color: var(--md-primary-fg-color);
+    }
+}
+
+/* Print styles */
+@media print {
+    .financial-disclaimer {
+        border: 2px solid #000;
+        background-color: #fff;
+        break-inside: avoid;
+    }
+    
+    .code-example {
+        break-inside: avoid;
+    }
+}

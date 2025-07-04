@@ -1,6 +1,5 @@
 """Dummy strategy for testing purposes."""
 
-
 from ..core.models import PortfolioParams, YearState
 from .base import BaseStrategy
 

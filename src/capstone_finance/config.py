@@ -5,7 +5,7 @@ simulation configurations from YAML files.
 """
 
 from pathlib import Path
-from typing import Self
+from typing import Any, Self
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field
@@ -142,7 +142,7 @@ class ConfigModel(BaseModel):
         with open(path, "w", encoding="utf-8") as f:
             yaml.dump(data, f, default_flow_style=False, sort_keys=True)
 
-    def merge_cli_args(self, **cli_args) -> Self:
+    def merge_cli_args(self, **cli_args: Any) -> Self:
         """Create a new ConfigModel by merging CLI arguments.
 
         CLI arguments take precedence over config file values.
