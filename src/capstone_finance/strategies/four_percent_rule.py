@@ -13,9 +13,7 @@ class FourPercentRule(BaseStrategy):
     """
 
     def calculate_withdrawal(
-        self,
-        state: YearState | None,
-        params: PortfolioParams
+        self, state: YearState | None, params: PortfolioParams
     ) -> float:
         """Calculate 4% rule withdrawal amount.
 

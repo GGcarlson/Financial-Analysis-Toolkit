@@ -14,6 +14,12 @@ from .config import ConfigModel
 from .core.ledger import CashFlowLedger
 from .core.market import MarketSimulator
 from .core.models import PortfolioParams, YearState
+from .reporting.plots import create_equity_curve_plot
+from .reporting.summary import (
+    create_summary_report,
+    create_summary_statistics,
+    save_summary_csv,
+)
 from .strategies.base import BaseStrategy
 
 app = typer.Typer(
@@ -115,11 +121,15 @@ def retire(
     strategy: str | None = typer.Option(
         None, "--strategy", help="Withdrawal strategy to use"
     ),
-    years: int | None = typer.Option(None, "--years", help="Number of years to simulate"),
+    years: int | None = typer.Option(
+        None, "--years", help="Number of years to simulate"
+    ),
     paths: int | None = typer.Option(
         None, "--paths", help="Number of simulation paths to run"
     ),
-    seed: int | None = typer.Option(None, "--seed", help="Random seed for reproducibility"),
+    seed: int | None = typer.Option(
+        None, "--seed", help="Random seed for reproducibility"
+    ),
     # Portfolio parameters
     init_balance: float | None = typer.Option(
         None, "--init-balance", help="Initial portfolio balance"
@@ -127,7 +137,9 @@ def retire(
     equity_pct: float | None = typer.Option(
         None, "--equity-pct", help="Equity allocation (0.0 to 1.0)"
     ),
-    fees_bps: int | None = typer.Option(None, "--fees-bps", help="Annual fees in basis points"),
+    fees_bps: int | None = typer.Option(
+        None, "--fees-bps", help="Annual fees in basis points"
+    ),
     # Market simulation parameters
     market_mode: str | None = typer.Option(
         None,
@@ -156,7 +168,9 @@ def retire(
     ),
     # Guyton-Klinger strategy parameters
     initial_rate: float | None = typer.Option(
-        None, "--initial-rate", help="Initial withdrawal rate for Guyton-Klinger strategy"
+        None,
+        "--initial-rate",
+        help="Initial withdrawal rate for Guyton-Klinger strategy",
     ),
     guard_pct: float | None = typer.Option(
         None, "--guard-pct", help="Guardrail percentage for Guyton-Klinger strategy"
@@ -180,7 +194,7 @@ def retire(
         else:
             # Use defaults
             cfg = ConfigModel()
-        
+
         # Merge CLI arguments (CLI args take precedence)
         cli_args = {
             "strategy": strategy,
@@ -202,10 +216,10 @@ def retire(
             "raise_pct": raise_pct,
             "cut_pct": cut_pct,
         }
-        
+
         # Merge config with CLI args (CLI takes precedence)
         final_config = cfg.merge_cli_args(**cli_args)
-        
+
     except Exception as e:
         console.print(f"[red]Error loading configuration: {e}[/red]")
         raise typer.Exit(1) from e
@@ -229,22 +243,22 @@ def retire(
         console.print("[blue]Initializing simulation components...[/blue]")
 
     params = PortfolioParams(
-        init_balance=final_config.init_balance, 
-        equity_pct=final_config.equity_pct, 
-        fees_bps=final_config.fees_bps, 
-        seed=final_config.seed
+        init_balance=final_config.init_balance,
+        equity_pct=final_config.equity_pct,
+        fees_bps=final_config.fees_bps,
+        seed=final_config.seed,
     )
 
     market_simulator = MarketSimulator(params, mode=final_config.market_mode)
 
     # Create strategy instance with appropriate parameters
     if final_config.strategy == "constant_pct":
-        strategy_instance = strategies[final_config.strategy](percentage=final_config.percent)
+        strategy_instance = strategies[final_config.strategy](
+            percentage=final_config.percent
+        )
     elif final_config.strategy == "endowment":
         strategy_instance = strategies[final_config.strategy](
-            alpha=final_config.alpha, 
-            beta=final_config.beta, 
-            window=final_config.window
+            alpha=final_config.alpha, beta=final_config.beta, window=final_config.window
         )
     elif final_config.strategy == "guyton_klinger":
         strategy_instance = strategies[final_config.strategy](
@@ -293,7 +307,46 @@ def retire(
     console.print(f"Equity Allocation: {final_config.equity_pct:.1%}")
     console.print(f"Annual Fees: {final_config.fees_bps} bps")
 
-    display_summary_statistics(df)
+    # Create enhanced summary report
+    report_params = {
+        "init_balance": final_config.init_balance,
+        "equity_pct": final_config.equity_pct,
+        "fees_bps": final_config.fees_bps,
+        "strategy": final_config.strategy,
+    }
+
+    summary_table = create_summary_report(df, final_config.strategy, report_params)
+    console.print("\n")
+    console.print(summary_table)
+
+    # Generate and save equity curve plot
+    equity_curve_path = Path("equity_curve.png")
+    if final_config.output:
+        # Place equity curve in same directory as CSV output
+        equity_curve_path = Path(final_config.output).parent / "equity_curve.png"
+
+    try:
+        create_equity_curve_plot(df, equity_curve_path, params=report_params)
+        console.print(
+            f"\n[green]Equity curve plot saved to: {equity_curve_path}[/green]"
+        )
+    except Exception as e:
+        console.print(
+            f"[yellow]Warning: Could not create equity curve plot: {e}[/yellow]"
+        )
+
+    # Save summary CSV
+    summary_csv_path = Path("summary.csv")
+    if final_config.output:
+        # Place summary in same directory as main CSV output
+        summary_csv_path = Path(final_config.output).parent / "summary.csv"
+
+    try:
+        stats = create_summary_statistics(df)
+        save_summary_csv(df, stats, summary_csv_path)
+        console.print(f"[green]Summary statistics saved to: {summary_csv_path}[/green]")
+    except Exception as e:
+        console.print(f"[yellow]Warning: Could not save summary CSV: {e}[/yellow]")
 
     # Save to CSV if requested
     if final_config.output:

@@ -6,7 +6,7 @@ Monetary fields are stored in nominal dollars.
 
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Self
+from typing import Self
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field
@@ -20,14 +20,18 @@ class YearState(BaseModel):
     year: int = Field(..., description="The calendar year")
     age: int = Field(..., ge=0, description="Age in years")
     balance: float = Field(..., description="Portfolio balance in nominal dollars")
-    inflation: float = Field(..., description="Inflation rate as a decimal (e.g., 0.03 for 3%)")
-    withdrawal_nominal: Optional[float] = Field(None, description="Withdrawal amount in nominal dollars")
+    inflation: float = Field(
+        ..., description="Inflation rate as a decimal (e.g., 0.03 for 3%)"
+    )
+    withdrawal_nominal: float | None = Field(
+        None, description="Withdrawal amount in nominal dollars"
+    )
 
     @classmethod
     def from_yaml(cls, path: Path | str) -> Self:
         """Load YearState from a YAML file."""
         path = Path(path) if isinstance(path, str) else path
-        with open(path, "r") as f:
+        with open(path) as f:
             data = yaml.safe_load(f)
         return cls(**data)
 
@@ -37,17 +41,22 @@ class PortfolioParams(BaseModel):
 
     model_config = ConfigDict(validate_assignment=True, frozen=True)
 
-    init_balance: float = Field(..., gt=0, description="Initial portfolio balance in nominal dollars")
-    equity_pct: float = Field(..., ge=0, le=1, description="Equity allocation as a decimal (0-1)")
+    init_balance: float = Field(
+        ..., gt=0, description="Initial portfolio balance in nominal dollars"
+    )
+    equity_pct: float = Field(
+        ..., ge=0, le=1, description="Equity allocation as a decimal (0-1)"
+    )
     fees_bps: int = Field(..., ge=0, description="Annual fees in basis points")
-    seed: int = Field(42, description="Random number generator seed for reproducibility")
-
+    seed: int = Field(
+        42, description="Random number generator seed for reproducibility"
+    )
 
     @classmethod
     def from_yaml(cls, path: Path | str) -> Self:
         """Load PortfolioParams from a YAML file."""
         path = Path(path) if isinstance(path, str) else path
-        with open(path, "r") as f:
+        with open(path) as f:
             data = yaml.safe_load(f)
         return cls(**data)
 
@@ -57,8 +66,12 @@ class LoanParams(BaseModel):
 
     model_config = ConfigDict(validate_assignment=True, frozen=True)
 
-    principal: float = Field(..., gt=0, description="Loan principal amount in nominal dollars")
-    rate: float = Field(..., ge=0, description="Annual interest rate as a decimal (e.g., 0.05 for 5%)")
+    principal: float = Field(
+        ..., gt=0, description="Loan principal amount in nominal dollars"
+    )
+    rate: float = Field(
+        ..., ge=0, description="Annual interest rate as a decimal (e.g., 0.05 for 5%)"
+    )
     term_months: int = Field(..., gt=0, description="Loan term in months")
     start: datetime = Field(..., description="Loan start date")
 
@@ -84,7 +97,11 @@ class LoanParams(BaseModel):
         n = self.term_months
 
         # Standard amortization formula
-        payment = self.principal * (monthly_rate * (1 + monthly_rate) ** n) / ((1 + monthly_rate) ** n - 1)
+        payment = (
+            self.principal
+            * (monthly_rate * (1 + monthly_rate) ** n)
+            / ((1 + monthly_rate) ** n - 1)
+        )
 
         return payment
 
@@ -92,7 +109,7 @@ class LoanParams(BaseModel):
     def from_yaml(cls, path: Path | str) -> Self:
         """Load LoanParams from a YAML file."""
         path = Path(path) if isinstance(path, str) else path
-        with open(path, "r") as f:
+        with open(path) as f:
             data = yaml.safe_load(f)
         # Convert datetime strings if needed
         if isinstance(data.get("start"), str):

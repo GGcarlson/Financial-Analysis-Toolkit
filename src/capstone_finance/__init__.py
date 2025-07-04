@@ -25,7 +25,7 @@ from .strategies import BaseStrategy, DummyStrategy
 
 __all__ = [
     "CashFlowLedger",
-    "MarketSimulator", 
+    "MarketSimulator",
     "PortfolioParams",
     "YearState",
     "BaseStrategy",

@@ -1,6 +1,5 @@
 """Constant percentage withdrawal strategy implementation."""
 
-
 from ..core.models import PortfolioParams, YearState
 from .base import BaseStrategy
 

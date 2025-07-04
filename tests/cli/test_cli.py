@@ -5,7 +5,6 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pandas as pd
-import pytest
 import yaml
 from typer.testing import CliRunner
 
@@ -35,13 +34,20 @@ class TestCLI:
 
     def test_retire_command_basic(self):
         """Test basic retire command execution."""
-        result = self.runner.invoke(app, [
-            "retire",
-            "--strategy", "four_percent_rule",
-            "--years", "5",
-            "--paths", "10",
-            "--seed", "42"
-        ])
+        result = self.runner.invoke(
+            app,
+            [
+                "retire",
+                "--strategy",
+                "four_percent_rule",
+                "--years",
+                "5",
+                "--paths",
+                "10",
+                "--seed",
+                "42",
+            ],
+        )
         assert result.exit_code == 0
         assert "Simulation completed successfully" in result.stdout
         assert "Strategy: four_percent_rule" in result.stdout
@@ -54,108 +60,166 @@ class TestCLI:
             tmp_path = tmp_file.name
 
         try:
-            result = self.runner.invoke(app, [
-                "retire",
-                "--strategy", "four_percent_rule",
-                "--years", "3",
-                "--paths", "5",
-                "--seed", "42",
-                "--output", tmp_path
-            ])
-            
+            result = self.runner.invoke(
+                app,
+                [
+                    "retire",
+                    "--strategy",
+                    "four_percent_rule",
+                    "--years",
+                    "3",
+                    "--paths",
+                    "5",
+                    "--seed",
+                    "42",
+                    "--output",
+                    tmp_path,
+                ],
+            )
+
             assert result.exit_code == 0
             assert "Simulation completed successfully" in result.stdout
             assert f"Results saved to: {tmp_path}" in result.stdout
-            
+
+            # Check new reporting features
+            assert "Retirement Simulation Summary Report" in result.stdout
+            assert "equity_curve.png" in result.stdout
+            assert "summary.csv" in result.stdout
+
             # Verify CSV file was created and has expected structure
             assert Path(tmp_path).exists()
             df = pd.read_csv(tmp_path)
-            
+
             # Check expected columns
-            expected_columns = ["path", "year", "age", "balance", "inflation", "withdrawal_nominal"]
+            expected_columns = [
+                "path",
+                "year",
+                "age",
+                "balance",
+                "inflation",
+                "withdrawal_nominal",
+            ]
             assert all(col in df.columns for col in expected_columns)
-            
+
             # Check we have the expected number of rows (paths * years)
             assert len(df) == 5 * 3  # 5 paths * 3 years
-            
+
             # Check paths are numbered correctly
-            assert set(df['path'].unique()) == {0, 1, 2, 3, 4}
-            
+            assert set(df["path"].unique()) == {0, 1, 2, 3, 4}
+
+            # Check that equity curve PNG was created
+            output_dir = Path(tmp_path).parent
+            equity_curve_path = output_dir / "equity_curve.png"
+            assert equity_curve_path.exists()
+            assert equity_curve_path.stat().st_size > 0
+
+            # Check that summary CSV was created
+            summary_csv_path = output_dir / "summary.csv"
+            assert summary_csv_path.exists()
+
         finally:
             # Clean up
             Path(tmp_path).unlink(missing_ok=True)
+            output_dir = Path(tmp_path).parent
+            (output_dir / "equity_curve.png").unlink(missing_ok=True)
+            (output_dir / "summary.csv").unlink(missing_ok=True)
 
     def test_retire_command_invalid_strategy(self):
         """Test retire command with invalid strategy."""
-        result = self.runner.invoke(app, [
-            "retire",
-            "--strategy", "nonexistent_strategy",
-            "--years", "5",
-            "--paths", "10"
-        ])
+        result = self.runner.invoke(
+            app,
+            [
+                "retire",
+                "--strategy",
+                "nonexistent_strategy",
+                "--years",
+                "5",
+                "--paths",
+                "10",
+            ],
+        )
         assert result.exit_code == 1
         assert "Strategy 'nonexistent_strategy' not found" in result.stdout
 
     def test_retire_command_invalid_equity_pct(self):
         """Test retire command with invalid equity percentage."""
-        result = self.runner.invoke(app, [
-            "retire",
-            "--equity-pct", "1.5",  # Invalid: > 1.0
-            "--years", "5",
-            "--paths", "10"
-        ])
+        result = self.runner.invoke(
+            app,
+            [
+                "retire",
+                "--equity-pct",
+                "1.5",  # Invalid: > 1.0
+                "--years",
+                "5",
+                "--paths",
+                "10",
+            ],
+        )
         assert result.exit_code == 1
         assert "Error loading configuration" in result.stdout
         assert "equity_pct" in result.stdout
 
     def test_retire_command_invalid_years(self):
         """Test retire command with invalid years."""
-        result = self.runner.invoke(app, [
-            "retire",
-            "--years", "0",  # Invalid: <= 0
-            "--paths", "10"
-        ])
+        result = self.runner.invoke(
+            app, ["retire", "--years", "0", "--paths", "10"]  # Invalid: <= 0
+        )
         assert result.exit_code == 1
         assert "Error loading configuration" in result.stdout
         assert "years" in result.stdout
 
     def test_retire_command_invalid_paths(self):
         """Test retire command with invalid paths."""
-        result = self.runner.invoke(app, [
-            "retire",
-            "--years", "5",
-            "--paths", "-1"  # Invalid: <= 0
-        ])
+        result = self.runner.invoke(
+            app, ["retire", "--years", "5", "--paths", "-1"]  # Invalid: <= 0
+        )
         assert result.exit_code == 1
         assert "Error loading configuration" in result.stdout
         assert "paths" in result.stdout
 
     def test_retire_command_invalid_market_mode(self):
         """Test retire command with invalid market mode."""
-        result = self.runner.invoke(app, [
-            "retire",
-            "--market-mode", "invalid_mode",
-            "--years", "5",
-            "--paths", "10"
-        ])
+        result = self.runner.invoke(
+            app,
+            [
+                "retire",
+                "--market-mode",
+                "invalid_mode",
+                "--years",
+                "5",
+                "--paths",
+                "10",
+            ],
+        )
         assert result.exit_code == 1
         assert "Error loading configuration" in result.stdout
         assert "market_mode" in result.stdout
 
     def test_retire_command_with_all_options(self):
         """Test retire command with all options specified."""
-        result = self.runner.invoke(app, [
-            "retire",
-            "--strategy", "four_percent_rule",
-            "--years", "5",
-            "--paths", "10",
-            "--seed", "123",
-            "--init-balance", "500000",
-            "--equity-pct", "0.8",
-            "--fees-bps", "75",
-            "--market-mode", "lognormal",
-            "--verbose"
-        ])
+        result = self.runner.invoke(
+            app,
+            [
+                "retire",
+                "--strategy",
+                "four_percent_rule",
+                "--years",
+                "5",
+                "--paths",
+                "10",
+                "--seed",
+                "123",
+                "--init-balance",
+                "500000",
+                "--equity-pct",
+                "0.8",
+                "--fees-bps",
+                "75",
+                "--market-mode",
+                "lognormal",
+                "--verbose",
+            ],
+        )
         assert result.exit_code == 0
         assert "Simulation completed successfully" in result.stdout
         assert "Initial Balance: $500,000.00" in result.stdout
@@ -164,14 +228,22 @@ class TestCLI:
 
     def test_retire_command_bootstrap_mode(self):
         """Test retire command with bootstrap market mode."""
-        result = self.runner.invoke(app, [
-            "retire",
-            "--strategy", "four_percent_rule",
-            "--years", "3",
-            "--paths", "5",
-            "--market-mode", "bootstrap",
-            "--seed", "42"
-        ])
+        result = self.runner.invoke(
+            app,
+            [
+                "retire",
+                "--strategy",
+                "four_percent_rule",
+                "--years",
+                "3",
+                "--paths",
+                "5",
+                "--market-mode",
+                "bootstrap",
+                "--seed",
+                "42",
+            ],
+        )
         assert result.exit_code == 0
         assert "Simulation completed successfully" in result.stdout
         assert "Market Mode: bootstrap" in result.stdout
@@ -184,26 +256,23 @@ class TestCLI:
             "paths": 50,
             "init_balance": 500000.0,
             "equity_pct": 0.7,
-            "verbose": False
+            "verbose": False,
         }
-        
+
         with tempfile.NamedTemporaryFile(mode="w", suffix=".yml", delete=False) as f:
             yaml.dump(config_data, f)
             config_path = f.name
-            
+
         try:
-            result = self.runner.invoke(app, [
-                "retire",
-                "--config", config_path
-            ])
+            result = self.runner.invoke(app, ["retire", "--config", config_path])
             assert result.exit_code == 0
             assert "Simulation completed successfully" in result.stdout
             assert "Strategy: four_percent_rule" in result.stdout
             assert "Years: 10" in result.stdout
             assert "Paths: 50" in result.stdout
             assert "$500,000.00" in result.stdout  # Initial balance
-            assert "70.0%" in result.stdout        # Equity allocation
-            
+            assert "70.0%" in result.stdout  # Equity allocation
+
         finally:
             Path(config_path).unlink()
 
@@ -214,38 +283,44 @@ class TestCLI:
             "years": 10,
             "paths": 50,
             "init_balance": 500000.0,
-            "equity_pct": 0.7
+            "equity_pct": 0.7,
         }
-        
+
         with tempfile.NamedTemporaryFile(mode="w", suffix=".yml", delete=False) as f:
             yaml.dump(config_data, f)
             config_path = f.name
-            
+
         try:
             # Override years and strategy via CLI
-            result = self.runner.invoke(app, [
-                "retire",
-                "--config", config_path,
-                "--years", "15",              # Override config
-                "--strategy", "constant_pct", # Override config
-                "--paths", "25"               # Override config
-            ])
+            result = self.runner.invoke(
+                app,
+                [
+                    "retire",
+                    "--config",
+                    config_path,
+                    "--years",
+                    "15",  # Override config
+                    "--strategy",
+                    "constant_pct",  # Override config
+                    "--paths",
+                    "25",  # Override config
+                ],
+            )
             assert result.exit_code == 0
             assert "Strategy: constant_pct" in result.stdout  # CLI override
-            assert "Years: 15" in result.stdout               # CLI override
-            assert "Paths: 25" in result.stdout               # CLI override
-            assert "$500,000.00" in result.stdout             # From config
-            assert "70.0%" in result.stdout                   # From config
-            
+            assert "Years: 15" in result.stdout  # CLI override
+            assert "Paths: 25" in result.stdout  # CLI override
+            assert "$500,000.00" in result.stdout  # From config
+            assert "70.0%" in result.stdout  # From config
+
         finally:
             Path(config_path).unlink()
 
     def test_retire_config_file_not_found(self):
         """Test error handling for missing config file."""
-        result = self.runner.invoke(app, [
-            "retire",
-            "--config", "nonexistent_config.yml"
-        ])
+        result = self.runner.invoke(
+            app, ["retire", "--config", "nonexistent_config.yml"]
+        )
         assert result.exit_code == 1
         assert "Error loading configuration" in result.stdout
 
@@ -254,15 +329,12 @@ class TestCLI:
         with tempfile.NamedTemporaryFile(mode="w", suffix=".yml", delete=False) as f:
             f.write("invalid: yaml: content: [")
             config_path = f.name
-            
+
         try:
-            result = self.runner.invoke(app, [
-                "retire",
-                "--config", config_path
-            ])
+            result = self.runner.invoke(app, ["retire", "--config", config_path])
             assert result.exit_code == 1
             assert "Error loading configuration" in result.stdout
-            
+
         finally:
             Path(config_path).unlink()
 
@@ -276,24 +348,21 @@ class TestCLI:
             "initial_rate": 0.045,
             "guard_pct": 0.25,
             "raise_pct": 0.15,
-            "cut_pct": 0.12
+            "cut_pct": 0.12,
         }
-        
+
         with tempfile.NamedTemporaryFile(mode="w", suffix=".yml", delete=False) as f:
             yaml.dump(config_data, f)
             config_path = f.name
-            
+
         try:
-            result = self.runner.invoke(app, [
-                "retire",
-                "--config", config_path
-            ])
+            result = self.runner.invoke(app, ["retire", "--config", config_path])
             assert result.exit_code == 0
             assert "Strategy: guyton_klinger" in result.stdout
             assert "Years: 8" in result.stdout
             assert "Paths: 30" in result.stdout
             assert "$800,000.00" in result.stdout
-            
+
         finally:
             Path(config_path).unlink()
 
@@ -313,40 +382,71 @@ class TestCLIUtilityFunctions:
         # Create mock simulation results
         results = [
             [  # Path 0
-                YearState(year=2024, age=65, balance=1000000.0, inflation=0.02, withdrawal_nominal=40000.0),
-                YearState(year=2025, age=66, balance=980000.0, inflation=0.03, withdrawal_nominal=41200.0),
+                YearState(
+                    year=2024,
+                    age=65,
+                    balance=1000000.0,
+                    inflation=0.02,
+                    withdrawal_nominal=40000.0,
+                ),
+                YearState(
+                    year=2025,
+                    age=66,
+                    balance=980000.0,
+                    inflation=0.03,
+                    withdrawal_nominal=41200.0,
+                ),
             ],
             [  # Path 1
-                YearState(year=2024, age=65, balance=1000000.0, inflation=0.02, withdrawal_nominal=40000.0),
-                YearState(year=2025, age=66, balance=970000.0, inflation=0.025, withdrawal_nominal=41000.0),
-            ]
+                YearState(
+                    year=2024,
+                    age=65,
+                    balance=1000000.0,
+                    inflation=0.02,
+                    withdrawal_nominal=40000.0,
+                ),
+                YearState(
+                    year=2025,
+                    age=66,
+                    balance=970000.0,
+                    inflation=0.025,
+                    withdrawal_nominal=41000.0,
+                ),
+            ],
         ]
-        
+
         df = create_results_dataframe(results)
-        
+
         # Check structure
-        expected_columns = ["path", "year", "age", "balance", "inflation", "withdrawal_nominal"]
+        expected_columns = [
+            "path",
+            "year",
+            "age",
+            "balance",
+            "inflation",
+            "withdrawal_nominal",
+        ]
         assert all(col in df.columns for col in expected_columns)
-        
+
         # Check data
         assert len(df) == 4  # 2 paths * 2 years each
-        assert set(df['path'].unique()) == {0, 1}
-        assert set(df['year'].unique()) == {2024, 2025}
-        assert df['balance'].min() == 970000.0
-        assert df['balance'].max() == 1000000.0
+        assert set(df["path"].unique()) == {0, 1}
+        assert set(df["year"].unique()) == {2024, 2025}
+        assert df["balance"].min() == 970000.0
+        assert df["balance"].max() == 1000000.0
 
-    @patch('capstone_finance.cli.importlib.metadata.entry_points')
+    @patch("capstone_finance.cli.importlib.metadata.entry_points")
     def test_get_available_strategies_with_error(self, mock_entry_points):
         """Test strategy discovery with loading errors."""
         from unittest.mock import MagicMock
-        
+
         # Mock entry point that raises exception when loaded
         mock_ep = MagicMock()
         mock_ep.name = "broken_strategy"
         mock_ep.load.side_effect = ImportError("Module not found")
-        
+
         mock_entry_points.return_value = [mock_ep]
-        
+
         strategies = get_available_strategies()
         assert isinstance(strategies, dict)
         # Should handle the error gracefully and not include the broken strategy
@@ -372,4 +472,3 @@ class TestCLIUtilityFunctions:
         assert "--paths" in result.stdout
         assert "--output" in result.stdout
         assert "--config" in result.stdout
-
