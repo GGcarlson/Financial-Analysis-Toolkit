@@ -1,0 +1,20 @@
+# Basic Retirement Simulation Configuration
+# Run with: finance-cli retire --config examples/retirement_basic.yml
+
+# Core simulation parameters
+strategy: four_percent_rule
+years: 30
+paths: 1000
+seed: 42
+
+# Portfolio parameters  
+init_balance: 1000000.0
+equity_pct: 0.6
+fees_bps: 50
+
+# Market simulation
+market_mode: lognormal
+
+# Output settings
+verbose: false
+# output: "retirement_basic_results.csv"  # Uncomment to save results

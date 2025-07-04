@@ -47,11 +47,38 @@ print(f"Success rate: {results.success_rate:.1%}")
 
 ```bash
 # Run a retirement analysis
-finance-cli retire --strategy 4percent --years 30 --seed 42
+finance-cli retire --strategy four_percent_rule --years 30 --seed 42
 
-# Compare strategies
-finance-cli retire --strategy 4percent,guyton-klinger --years 30
+# Use a configuration file
+finance-cli retire --config examples/retirement_basic.yml
+
+# Override config with CLI flags (CLI takes precedence)
+finance-cli retire --config examples/retirement_basic.yml --years 40 --strategy guyton_klinger
 ```
+
+### Configuration Files
+
+Complex simulations can be defined in YAML configuration files instead of using many CLI flags:
+
+```yaml
+# retirement_config.yml
+strategy: guyton_klinger
+years: 30
+paths: 1000
+init_balance: 1000000.0
+equity_pct: 0.6
+
+# Guyton-Klinger specific parameters
+initial_rate: 0.05
+guard_pct: 0.20
+raise_pct: 0.10
+cut_pct: 0.10
+
+output: "results.csv"
+verbose: true
+```
+
+See [`examples/`](examples/) directory for complete configuration examples.
 
 ## 📊 Core Features
 

@@ -10,6 +10,7 @@ from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
 
+from .config import ConfigModel
 from .core.ledger import CashFlowLedger
 from .core.market import MarketSimulator
 from .core.models import PortfolioParams, YearState
@@ -106,85 +107,108 @@ def display_summary_statistics(df: pd.DataFrame) -> None:
 
 @app.command()
 def retire(
-    strategy: str = typer.Option(
-        "four_percent_rule", "--strategy", help="Withdrawal strategy to use"
+    # Configuration file
+    config: str | None = typer.Option(
+        None, "--config", help="Path to YAML configuration file"
     ),
-    years: int = typer.Option(30, "--years", help="Number of years to simulate"),
-    paths: int = typer.Option(
-        1000, "--paths", help="Number of simulation paths to run"
+    # Core simulation parameters
+    strategy: str | None = typer.Option(
+        None, "--strategy", help="Withdrawal strategy to use"
     ),
-    seed: int = typer.Option(42, "--seed", help="Random seed for reproducibility"),
-    init_balance: float = typer.Option(
-        1_000_000.0, "--init-balance", help="Initial portfolio balance"
+    years: int | None = typer.Option(None, "--years", help="Number of years to simulate"),
+    paths: int | None = typer.Option(
+        None, "--paths", help="Number of simulation paths to run"
     ),
-    equity_pct: float = typer.Option(
-        0.6, "--equity-pct", help="Equity allocation (0.0 to 1.0)"
+    seed: int | None = typer.Option(None, "--seed", help="Random seed for reproducibility"),
+    # Portfolio parameters
+    init_balance: float | None = typer.Option(
+        None, "--init-balance", help="Initial portfolio balance"
     ),
-    fees_bps: int = typer.Option(50, "--fees-bps", help="Annual fees in basis points"),
-    market_mode: str = typer.Option(
-        "lognormal",
+    equity_pct: float | None = typer.Option(
+        None, "--equity-pct", help="Equity allocation (0.0 to 1.0)"
+    ),
+    fees_bps: int | None = typer.Option(None, "--fees-bps", help="Annual fees in basis points"),
+    # Market simulation parameters
+    market_mode: str | None = typer.Option(
+        None,
         "--market-mode",
         help="Market simulation mode (lognormal or bootstrap)",
     ),
+    # Output parameters
     output: str | None = typer.Option(None, "--output", help="Output CSV file path"),
     verbose: bool = typer.Option(False, "--verbose", help="Enable verbose output"),
-    percent: float = typer.Option(
-        0.05, "--percent", help="Percentage for constant_pct strategy (0.0 to 1.0)"
+    # Strategy-specific parameters
+    percent: float | None = typer.Option(
+        None, "--percent", help="Percentage for constant_pct strategy (0.0 to 1.0)"
     ),
-    alpha: float = typer.Option(
-        0.7,
+    alpha: float | None = typer.Option(
+        None,
         "--alpha",
         help="Alpha parameter for endowment strategy (weight for current portfolio)",
     ),
-    beta: float = typer.Option(
-        0.3,
+    beta: float | None = typer.Option(
+        None,
         "--beta",
         help="Beta parameter for endowment strategy (weight for moving average)",
     ),
-    window: int = typer.Option(
-        3, "--window", help="Window size for endowment strategy moving average"
+    window: int | None = typer.Option(
+        None, "--window", help="Window size for endowment strategy moving average"
+    ),
+    # Guyton-Klinger strategy parameters
+    initial_rate: float | None = typer.Option(
+        None, "--initial-rate", help="Initial withdrawal rate for Guyton-Klinger strategy"
+    ),
+    guard_pct: float | None = typer.Option(
+        None, "--guard-pct", help="Guardrail percentage for Guyton-Klinger strategy"
+    ),
+    raise_pct: float | None = typer.Option(
+        None, "--raise-pct", help="Raise percentage for Guyton-Klinger strategy"
+    ),
+    cut_pct: float | None = typer.Option(
+        None, "--cut-pct", help="Cut percentage for Guyton-Klinger strategy"
     ),
 ) -> None:
     """Run retirement simulation with specified parameters."""
 
-    # Validate inputs
-    if equity_pct < 0 or equity_pct > 1:
-        console.print("[red]Error: Equity percentage must be between 0 and 1[/red]")
-        raise typer.Exit(1)
-
-    if years <= 0:
-        console.print("[red]Error: Years must be positive[/red]")
-        raise typer.Exit(1)
-
-    if paths <= 0:
-        console.print("[red]Error: Paths must be positive[/red]")
-        raise typer.Exit(1)
-
-    if market_mode not in ["lognormal", "bootstrap"]:
-        console.print(
-            "[red]Error: Market mode must be 'lognormal' or 'bootstrap'[/red]"
-        )
-        raise typer.Exit(1)
-
-    if percent < 0 or percent > 1:
-        console.print("[red]Error: Percent must be between 0 and 1[/red]")
-        raise typer.Exit(1)
-
-    if alpha < 0 or alpha > 1:
-        console.print("[red]Error: Alpha must be between 0 and 1[/red]")
-        raise typer.Exit(1)
-
-    if beta < 0 or beta > 1:
-        console.print("[red]Error: Beta must be between 0 and 1[/red]")
-        raise typer.Exit(1)
-
-    if abs(alpha + beta - 1.0) > 1e-10:
-        console.print("[red]Error: Alpha + Beta must equal 1.0[/red]")
-        raise typer.Exit(1)
-
-    if window < 1:
-        console.print("[red]Error: Window must be at least 1[/red]")
-        raise typer.Exit(1)
+    # Load configuration (defaults + config file + CLI args)
+    try:
+        if config:
+            # Load from config file
+            cfg = ConfigModel.from_yaml(config)
+            if verbose:
+                console.print(f"[blue]Loaded configuration from: {config}[/blue]")
+        else:
+            # Use defaults
+            cfg = ConfigModel()
+        
+        # Merge CLI arguments (CLI args take precedence)
+        cli_args = {
+            "strategy": strategy,
+            "years": years,
+            "paths": paths,
+            "seed": seed,
+            "init_balance": init_balance,
+            "equity_pct": equity_pct,
+            "fees_bps": fees_bps,
+            "market_mode": market_mode,
+            "output": output,
+            "verbose": verbose,
+            "percent": percent,
+            "alpha": alpha,
+            "beta": beta,
+            "window": window,
+            "initial_rate": initial_rate,
+            "guard_pct": guard_pct,
+            "raise_pct": raise_pct,
+            "cut_pct": cut_pct,
+        }
+        
+        # Merge config with CLI args (CLI takes precedence)
+        final_config = cfg.merge_cli_args(**cli_args)
+        
+    except Exception as e:
+        console.print(f"[red]Error loading configuration: {e}[/red]")
+        raise typer.Exit(1) from e
 
     # Load available strategies
     strategies = get_available_strategies()
@@ -193,36 +217,50 @@ def retire(
         console.print("[red]Error: No strategies available[/red]")
         raise typer.Exit(1)
 
-    if strategy not in strategies:
-        console.print(f"[red]Error: Strategy '{strategy}' not found[/red]")
+    if final_config.strategy not in strategies:
+        console.print(f"[red]Error: Strategy '{final_config.strategy}' not found[/red]")
         console.print("Available strategies:")
         for name in strategies:
             console.print(f"  - {name}")
         raise typer.Exit(1)
 
     # Initialize components
-    if verbose:
+    if final_config.verbose:
         console.print("[blue]Initializing simulation components...[/blue]")
 
     params = PortfolioParams(
-        init_balance=init_balance, equity_pct=equity_pct, fees_bps=fees_bps, seed=seed
+        init_balance=final_config.init_balance, 
+        equity_pct=final_config.equity_pct, 
+        fees_bps=final_config.fees_bps, 
+        seed=final_config.seed
     )
 
-    market_simulator = MarketSimulator(params, mode=market_mode)
+    market_simulator = MarketSimulator(params, mode=final_config.market_mode)
 
     # Create strategy instance with appropriate parameters
-    if strategy == "constant_pct":
-        strategy_instance = strategies[strategy](percentage=percent)
-    elif strategy == "endowment":
-        strategy_instance = strategies[strategy](alpha=alpha, beta=beta, window=window)
+    if final_config.strategy == "constant_pct":
+        strategy_instance = strategies[final_config.strategy](percentage=final_config.percent)
+    elif final_config.strategy == "endowment":
+        strategy_instance = strategies[final_config.strategy](
+            alpha=final_config.alpha, 
+            beta=final_config.beta, 
+            window=final_config.window
+        )
+    elif final_config.strategy == "guyton_klinger":
+        strategy_instance = strategies[final_config.strategy](
+            initial_rate=final_config.initial_rate,
+            guard_pct=final_config.guard_pct,
+            raise_pct=final_config.raise_pct,
+            cut_pct=final_config.cut_pct,
+        )
     else:
-        strategy_instance = strategies[strategy]()
+        strategy_instance = strategies[final_config.strategy]()
 
     ledger = CashFlowLedger(market_simulator, strategy_instance, params)
 
     # Run simulation
     console.print(
-        f"[green]Running {paths} simulation paths for {years} years...[/green]"
+        f"[green]Running {final_config.paths} simulation paths for {final_config.years} years...[/green]"
     )
 
     with Progress(
@@ -233,33 +271,33 @@ def retire(
         task = progress.add_task("Simulating...", total=None)
 
         try:
-            results = ledger.run(years=years, paths=paths)
+            results = ledger.run(years=final_config.years, paths=final_config.paths)
             progress.update(task, description="Simulation complete!")
         except Exception as e:
             console.print(f"[red]Simulation failed: {e}[/red]")
             raise typer.Exit(1) from e
 
     # Convert to DataFrame
-    if verbose:
+    if final_config.verbose:
         console.print("[blue]Processing results...[/blue]")
 
     df = create_results_dataframe(results)
 
     # Display summary
     console.print("\n[green]Simulation completed successfully![/green]")
-    console.print(f"Strategy: {strategy}")
-    console.print(f"Years: {years}")
-    console.print(f"Paths: {paths}")
-    console.print(f"Market Mode: {market_mode}")
-    console.print(f"Initial Balance: ${init_balance:,.2f}")
-    console.print(f"Equity Allocation: {equity_pct:.1%}")
-    console.print(f"Annual Fees: {fees_bps} bps")
+    console.print(f"Strategy: {final_config.strategy}")
+    console.print(f"Years: {final_config.years}")
+    console.print(f"Paths: {final_config.paths}")
+    console.print(f"Market Mode: {final_config.market_mode}")
+    console.print(f"Initial Balance: ${final_config.init_balance:,.2f}")
+    console.print(f"Equity Allocation: {final_config.equity_pct:.1%}")
+    console.print(f"Annual Fees: {final_config.fees_bps} bps")
 
     display_summary_statistics(df)
 
     # Save to CSV if requested
-    if output:
-        output_path = Path(output)
+    if final_config.output:
+        output_path = Path(final_config.output)
         try:
             df.to_csv(output_path, index=False)
             console.print(f"\n[green]Results saved to: {output_path}[/green]")
@@ -267,7 +305,7 @@ def retire(
             console.print(f"[red]Error saving CSV: {e}[/red]")
             raise typer.Exit(1) from e
 
-    if verbose:
+    if final_config.verbose:
         console.print(f"\n[blue]Total data points: {len(df)}[/blue]")
 
 

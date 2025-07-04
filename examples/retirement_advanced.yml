@@ -1,0 +1,26 @@
+# Advanced Retirement Simulation Configuration
+# Demonstrates more aggressive portfolio with endowment strategy
+# Run with: finance-cli retire --config examples/retirement_advanced.yml
+
+# Core simulation parameters
+strategy: endowment
+years: 40
+paths: 5000
+seed: 123
+
+# Portfolio parameters - Higher risk, higher allocation
+init_balance: 2000000.0
+equity_pct: 0.8
+fees_bps: 25
+
+# Market simulation using bootstrap method
+market_mode: bootstrap
+
+# Endowment strategy specific parameters
+alpha: 0.8      # Higher weight on current portfolio
+beta: 0.2       # Lower weight on moving average
+window: 5       # 5-year moving average
+
+# Output settings
+verbose: true
+output: "retirement_advanced_results.csv"

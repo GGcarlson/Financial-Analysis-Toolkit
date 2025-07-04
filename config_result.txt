@@ -1,0 +1,24 @@
+Running 10 simulation paths for 30 years...
+⠋ Simulation complete!
+
+Simulation completed successfully!
+Strategy: four_percent_rule
+Years: 30
+Paths: 10
+Market Mode: lognormal
+Initial Balance: $1,000,000.00
+Equity Allocation: 60.0%
+Annual Fees: 50 bps
+    Final Year Summary Statistics     
+┏━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Metric            ┃ Value          ┃
+┡━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ Mean Balance      │ $3,204,957.52  │
+│ Median Balance    │ $1,824,510.83  │
+│ Std Dev Balance   │ $3,623,522.31  │
+│ Min Balance       │ $405,214.44    │
+│ Max Balance       │ $12,507,790.44 │
+│ Mean Withdrawal   │ $40,000.00     │
+│ Median Withdrawal │ $40,000.00     │
+│ Success Rate      │ 100.0%         │
+└───────────────────┴────────────────┘

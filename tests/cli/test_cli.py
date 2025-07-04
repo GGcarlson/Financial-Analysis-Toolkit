@@ -6,6 +6,7 @@ from unittest.mock import patch
 
 import pandas as pd
 import pytest
+import yaml
 from typer.testing import CliRunner
 
 from capstone_finance.cli import app, create_results_dataframe, get_available_strategies
@@ -104,7 +105,8 @@ class TestCLI:
             "--paths", "10"
         ])
         assert result.exit_code == 1
-        assert "Equity percentage must be between 0 and 1" in result.stdout
+        assert "Error loading configuration" in result.stdout
+        assert "equity_pct" in result.stdout
 
     def test_retire_command_invalid_years(self):
         """Test retire command with invalid years."""
@@ -114,7 +116,8 @@ class TestCLI:
             "--paths", "10"
         ])
         assert result.exit_code == 1
-        assert "Years must be positive" in result.stdout
+        assert "Error loading configuration" in result.stdout
+        assert "years" in result.stdout
 
     def test_retire_command_invalid_paths(self):
         """Test retire command with invalid paths."""
@@ -124,7 +127,8 @@ class TestCLI:
             "--paths", "-1"  # Invalid: <= 0
         ])
         assert result.exit_code == 1
-        assert "Paths must be positive" in result.stdout
+        assert "Error loading configuration" in result.stdout
+        assert "paths" in result.stdout
 
     def test_retire_command_invalid_market_mode(self):
         """Test retire command with invalid market mode."""
@@ -135,7 +139,8 @@ class TestCLI:
             "--paths", "10"
         ])
         assert result.exit_code == 1
-        assert "Market mode must be 'lognormal' or 'bootstrap'" in result.stdout
+        assert "Error loading configuration" in result.stdout
+        assert "market_mode" in result.stdout
 
     def test_retire_command_with_all_options(self):
         """Test retire command with all options specified."""
@@ -170,6 +175,127 @@ class TestCLI:
         assert result.exit_code == 0
         assert "Simulation completed successfully" in result.stdout
         assert "Market Mode: bootstrap" in result.stdout
+
+    def test_retire_with_config_file(self):
+        """Test retire command with configuration file."""
+        config_data = {
+            "strategy": "four_percent_rule",
+            "years": 10,
+            "paths": 50,
+            "init_balance": 500000.0,
+            "equity_pct": 0.7,
+            "verbose": False
+        }
+        
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yml", delete=False) as f:
+            yaml.dump(config_data, f)
+            config_path = f.name
+            
+        try:
+            result = self.runner.invoke(app, [
+                "retire",
+                "--config", config_path
+            ])
+            assert result.exit_code == 0
+            assert "Simulation completed successfully" in result.stdout
+            assert "Strategy: four_percent_rule" in result.stdout
+            assert "Years: 10" in result.stdout
+            assert "Paths: 50" in result.stdout
+            assert "$500,000.00" in result.stdout  # Initial balance
+            assert "70.0%" in result.stdout        # Equity allocation
+            
+        finally:
+            Path(config_path).unlink()
+
+    def test_retire_config_file_cli_precedence(self):
+        """Test that CLI arguments override config file values."""
+        config_data = {
+            "strategy": "four_percent_rule",
+            "years": 10,
+            "paths": 50,
+            "init_balance": 500000.0,
+            "equity_pct": 0.7
+        }
+        
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yml", delete=False) as f:
+            yaml.dump(config_data, f)
+            config_path = f.name
+            
+        try:
+            # Override years and strategy via CLI
+            result = self.runner.invoke(app, [
+                "retire",
+                "--config", config_path,
+                "--years", "15",              # Override config
+                "--strategy", "constant_pct", # Override config
+                "--paths", "25"               # Override config
+            ])
+            assert result.exit_code == 0
+            assert "Strategy: constant_pct" in result.stdout  # CLI override
+            assert "Years: 15" in result.stdout               # CLI override
+            assert "Paths: 25" in result.stdout               # CLI override
+            assert "$500,000.00" in result.stdout             # From config
+            assert "70.0%" in result.stdout                   # From config
+            
+        finally:
+            Path(config_path).unlink()
+
+    def test_retire_config_file_not_found(self):
+        """Test error handling for missing config file."""
+        result = self.runner.invoke(app, [
+            "retire",
+            "--config", "nonexistent_config.yml"
+        ])
+        assert result.exit_code == 1
+        assert "Error loading configuration" in result.stdout
+
+    def test_retire_config_file_invalid_yaml(self):
+        """Test error handling for invalid YAML config."""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yml", delete=False) as f:
+            f.write("invalid: yaml: content: [")
+            config_path = f.name
+            
+        try:
+            result = self.runner.invoke(app, [
+                "retire",
+                "--config", config_path
+            ])
+            assert result.exit_code == 1
+            assert "Error loading configuration" in result.stdout
+            
+        finally:
+            Path(config_path).unlink()
+
+    def test_retire_config_guyton_klinger_strategy(self):
+        """Test config file with Guyton-Klinger strategy parameters."""
+        config_data = {
+            "strategy": "guyton_klinger",
+            "years": 8,
+            "paths": 30,
+            "init_balance": 800000.0,
+            "initial_rate": 0.045,
+            "guard_pct": 0.25,
+            "raise_pct": 0.15,
+            "cut_pct": 0.12
+        }
+        
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yml", delete=False) as f:
+            yaml.dump(config_data, f)
+            config_path = f.name
+            
+        try:
+            result = self.runner.invoke(app, [
+                "retire",
+                "--config", config_path
+            ])
+            assert result.exit_code == 0
+            assert "Strategy: guyton_klinger" in result.stdout
+            assert "Years: 8" in result.stdout
+            assert "Paths: 30" in result.stdout
+            assert "$800,000.00" in result.stdout
+            
+        finally:
+            Path(config_path).unlink()
 
 
 class TestCLIUtilityFunctions:
@@ -245,3 +371,5 @@ class TestCLIUtilityFunctions:
         assert "--years" in result.stdout
         assert "--paths" in result.stdout
         assert "--output" in result.stdout
+        assert "--config" in result.stdout
+

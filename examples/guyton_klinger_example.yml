@@ -1,0 +1,27 @@
+# Guyton-Klinger Guardrails Strategy Example
+# Demonstrates dynamic withdrawal with guardrails
+# Run with: finance-cli retire --config examples/guyton_klinger_example.yml
+
+# Core simulation parameters
+strategy: guyton_klinger
+years: 35
+paths: 2000
+seed: 789
+
+# Portfolio parameters
+init_balance: 1500000.0
+equity_pct: 0.65
+fees_bps: 40
+
+# Market simulation
+market_mode: lognormal
+
+# Guyton-Klinger strategy parameters
+initial_rate: 0.045     # Start with 4.5% withdrawal rate
+guard_pct: 0.25         # ±25% guardrails (wider than default)
+raise_pct: 0.15         # 15% raise when below lower guardrail
+cut_pct: 0.12           # 12% cut when above upper guardrail
+
+# Output settings
+verbose: true
+output: "guyton_klinger_results.csv"
