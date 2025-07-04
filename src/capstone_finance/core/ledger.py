@@ -1,6 +1,7 @@
 """Cash flow ledger for running financial simulations."""
 
 from collections.abc import Callable
+from dataclasses import dataclass
 
 import numpy as np
 from numpy.typing import NDArray
@@ -175,6 +176,14 @@ def run_simulation_vectorized(
         def tax_engine(w, b):
             return 0.0
 
+    @dataclass(slots=True)
+    class _State:
+        year: int
+        age: int
+        balance: float
+        inflation: float
+        withdrawal_nominal: float | None
+
     for path_idx in range(paths):
         balance = initial_balance
 
@@ -183,8 +192,8 @@ def run_simulation_vectorized(
             current_age = starting_age + year_idx
             market_return = returns[path_idx, year_idx]
 
-            # Create current state for strategy
-            current_state = YearState(
+            # Lightweight state object to avoid Pydantic overhead
+            current_state = _State(
                 year=current_year,
                 age=current_age,
                 balance=balance,
@@ -201,8 +210,9 @@ def run_simulation_vectorized(
                 balance -= tax_engine(withdrawal, balance)
 
             # Apply fees and market return
-            balance = balance * fee_factor * (1.0 + market_return)
-            balance = max(0.0, balance)
+            balance *= fee_factor * (1.0 + market_return)
+            if balance < 0.0:
+                balance = 0.0
 
             balances[path_idx, year_idx] = balance
 
