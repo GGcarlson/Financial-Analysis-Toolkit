@@ -165,13 +165,19 @@ class TestStrategyProperties:
         strategy = AVAILABLE_STRATEGIES[strategy_name]()
         withdrawal = strategy.calculate_withdrawal(state, params)
 
-        # Withdrawal should not exceed 100% of initial balance per year
-        # (this is a very generous upper bound to catch obvious errors)
-        max_reasonable = params.init_balance * 1.0
+        # For strategies that depend on current balance (like constant_pct),
+        # use current balance as the bound. For others, use initial balance.
+        if strategy_name == "constant_pct":
+            # Constant percentage strategy can withdraw up to 100% of current balance
+            max_reasonable = state.balance * 1.0
+        else:
+            # Other strategies should not exceed 100% of initial balance per year
+            # (this is a very generous upper bound to catch obvious errors)
+            max_reasonable = params.init_balance * 1.0
 
         assert withdrawal <= max_reasonable, (
             f"Strategy {strategy_name} returned unreasonably high withdrawal: "
-            f"{withdrawal:.2f} > {max_reasonable:.2f} (100% of initial balance)"
+            f"{withdrawal:.2f} > {max_reasonable:.2f} (100% of bound)"
         )
 
     @pytest.mark.parametrize("strategy_name", STRATEGY_NAMES)

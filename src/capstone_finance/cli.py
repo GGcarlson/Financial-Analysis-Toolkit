@@ -142,6 +142,11 @@ def retire(
         "--verbose",
         help="Enable verbose output"
     ),
+    percent: float = typer.Option(
+        0.05,
+        "--percent",
+        help="Percentage for constant_pct strategy (0.0 to 1.0)"
+    ),
 ) -> None:
     """Run retirement simulation with specified parameters."""
 
@@ -160,6 +165,10 @@ def retire(
 
     if market_mode not in ["lognormal", "bootstrap"]:
         console.print("[red]Error: Market mode must be 'lognormal' or 'bootstrap'[/red]")
+        raise typer.Exit(1)
+
+    if percent < 0 or percent > 1:
+        console.print("[red]Error: Percent must be between 0 and 1[/red]")
         raise typer.Exit(1)
 
     # Load available strategies
@@ -188,7 +197,13 @@ def retire(
     )
 
     market_simulator = MarketSimulator(params, mode=market_mode)
-    strategy_instance = strategies[strategy]()
+    
+    # Create strategy instance with appropriate parameters
+    if strategy == "constant_pct":
+        strategy_instance = strategies[strategy](percentage=percent)
+    else:
+        strategy_instance = strategies[strategy]()
+    
     ledger = CashFlowLedger(market_simulator, strategy_instance, params)
 
     # Run simulation
