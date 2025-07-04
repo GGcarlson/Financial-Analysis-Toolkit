@@ -62,7 +62,8 @@ Documentation = "https://github.com/GGcarlson/Financial-Analysis-Toolkit#readme"
 "Bug Tracker" = "https://github.com/GGcarlson/Financial-Analysis-Toolkit/issues"
 
 [project.entry-points."capstone_finance.strategies"]
-# Strategy plugins will be registered here
+dummy = "capstone_finance.strategies.dummy:DummyStrategy"
+four_percent_rule = "capstone_finance.strategies.four_percent_rule:FourPercentRule"
 
 [project.scripts]
 finance-cli = "capstone_finance.cli:main"
