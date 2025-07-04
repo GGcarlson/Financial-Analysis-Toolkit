@@ -32,6 +32,9 @@ requires-python = ">=3.11"
 dependencies = [
     "pydantic>=2.0.0",
     "pyyaml>=6.0.0",
+    "numpy>=1.24.0",
+    "pandas>=2.0.0",
+    "pandas-datareader>=0.10.0",
 ]
 
 [project.optional-dependencies]
@@ -146,6 +149,7 @@ addopts = [
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "integration: marks tests as integration tests",
+    "performance: marks tests as performance tests",
 ]
 
 [tool.coverage.run]

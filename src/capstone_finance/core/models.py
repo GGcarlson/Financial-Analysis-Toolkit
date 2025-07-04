@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Optional, Self
 
 import yaml
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class YearState(BaseModel):
@@ -42,13 +42,6 @@ class PortfolioParams(BaseModel):
     fees_bps: int = Field(..., ge=0, description="Annual fees in basis points")
     seed: int = Field(42, description="Random number generator seed for reproducibility")
 
-    @field_validator("equity_pct")
-    @classmethod
-    def validate_equity_pct(cls, v: float) -> float:
-        """Ensure equity percentage is between 0 and 1."""
-        if not 0 <= v <= 1:
-            raise ValueError(f"equity_pct must be between 0 and 1, got {v}")
-        return v
 
     @classmethod
     def from_yaml(cls, path: Path | str) -> Self:
