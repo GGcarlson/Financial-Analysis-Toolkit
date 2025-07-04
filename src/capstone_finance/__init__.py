@@ -18,3 +18,16 @@ __email__ = "john@example.com"
 
 # Version information
 VERSION = __version__
+
+# Import key classes for easy access
+from .core import CashFlowLedger, MarketSimulator, PortfolioParams, YearState
+from .strategies import BaseStrategy, DummyStrategy
+
+__all__ = [
+    "CashFlowLedger",
+    "MarketSimulator", 
+    "PortfolioParams",
+    "YearState",
+    "BaseStrategy",
+    "DummyStrategy",
+]
