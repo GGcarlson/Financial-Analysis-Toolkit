@@ -30,7 +30,8 @@ classifiers = [
 ]
 requires-python = ">=3.11"
 dependencies = [
-    # Core dependencies will be added as we implement features
+    "pydantic>=2.0.0",
+    "pyyaml>=6.0.0",
 ]
 
 [project.optional-dependencies]
