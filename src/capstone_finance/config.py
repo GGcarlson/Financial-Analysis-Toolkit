@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any, Self
 
 import yaml
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class ConfigModel(BaseModel):
@@ -46,6 +46,12 @@ class ConfigModel(BaseModel):
     # Output parameters
     output: str | None = Field(None, description="Output CSV file path")
     verbose: bool = Field(False, description="Enable verbose output")
+
+    # Tax parameters
+    tax_filing_status: str | None = Field(
+        None, 
+        description="Tax filing status: 'single', 'married', or None (no tax)"
+    )
 
     # Strategy-specific parameters
     # Constant percentage strategy
@@ -100,6 +106,10 @@ class ConfigModel(BaseModel):
         # Validate market mode
         if self.market_mode not in ["lognormal", "bootstrap"]:
             raise ValueError("market_mode must be 'lognormal' or 'bootstrap'")
+
+        # Validate tax filing status
+        if self.tax_filing_status is not None and self.tax_filing_status not in ["single", "married"]:
+            raise ValueError("tax_filing_status must be 'single', 'married', or None")
 
         # Validate alpha + beta = 1.0 for endowment strategy
         if abs(self.alpha + self.beta - 1.0) > 1e-10:

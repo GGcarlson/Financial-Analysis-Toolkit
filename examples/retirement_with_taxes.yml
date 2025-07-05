@@ -1,0 +1,31 @@
+# Example: Retirement Simulation with Federal Tax Engine
+#
+# This configuration demonstrates using the US Federal Tax Engine
+# to simulate retirement with tax implications on withdrawals.
+#
+# ⚠️  IMPORTANT: This is for educational/simulation purposes only.
+# Does not include state taxes, AMT, NIIT, or other tax complications.
+# Consult a qualified tax professional for actual tax planning.
+
+# Core simulation parameters
+strategy: constant_pct
+percent: 0.04  # 4% withdrawal rate
+years: 30
+paths: 1000
+seed: 42
+
+# Portfolio parameters
+init_balance: 1_000_000  # $1M initial balance
+equity_pct: 0.6  # 60% stocks, 40% bonds
+fees_bps: 50  # 0.5% annual fees
+
+# Market simulation
+market_mode: lognormal
+
+# Tax configuration
+# Options: "single", "married", or null (no tax)
+tax_filing_status: single
+
+# Output configuration
+output: retirement_with_taxes_results.csv
+verbose: true

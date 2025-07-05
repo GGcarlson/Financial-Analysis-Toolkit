@@ -14,6 +14,7 @@ from .config import ConfigModel
 from .core.ledger import CashFlowLedger
 from .core.market import MarketSimulator
 from .core.models import PortfolioParams, YearState
+from .core.tax import create_tax_engine
 from .reporting.plots import create_equity_curve_plot
 from .reporting.summary import (
     create_summary_report,
@@ -149,6 +150,10 @@ def retire(
     # Output parameters
     output: str | None = typer.Option(None, "--output", help="Output CSV file path"),
     verbose: bool = typer.Option(False, "--verbose", help="Enable verbose output"),
+    # Tax parameters
+    tax: str | None = typer.Option(
+        None, "--tax", help="Tax filing status: 'single' or 'married' (default: no tax)"
+    ),
     # Strategy-specific parameters
     percent: float | None = typer.Option(
         None, "--percent", help="Percentage for constant_pct strategy (0.0 to 1.0)"
@@ -211,6 +216,7 @@ def retire(
             "market_mode": market_mode,
             "output": output,
             "verbose": verbose,
+            "tax_filing_status": tax,  # Map CLI --tax to config field
             "percent": percent,
             "alpha": alpha,
             "beta": beta,
@@ -282,7 +288,14 @@ def retire(
     else:
         strategy_instance = strategies[final_config.strategy]()
 
-    ledger = CashFlowLedger(market_simulator, strategy_instance, params)
+    # Create tax engine if tax filing status is specified
+    tax_engine = None
+    if final_config.tax_filing_status:
+        tax_engine = create_tax_engine(final_config.tax_filing_status)
+        if final_config.verbose:
+            console.print(f"[blue]Tax engine enabled: {final_config.tax_filing_status} filing[/blue]")
+
+    ledger = CashFlowLedger(market_simulator, strategy_instance, params, tax_engine=tax_engine)
 
     # Run simulation
     console.print(
