@@ -20,8 +20,8 @@ __email__ = "john@example.com"
 VERSION = __version__
 
 # Import key classes for easy access
-from .core import CashFlowLedger, MarketSimulator, PortfolioParams, YearState
-from .strategies import BaseStrategy, DummyStrategy
+from .core import CashFlowLedger, MarketSimulator, PortfolioParams, YearState  # noqa: E402
+from .strategies import BaseStrategy, DummyStrategy  # noqa: E402
 
 __all__ = [
     "CashFlowLedger",

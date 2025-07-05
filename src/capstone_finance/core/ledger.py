@@ -1,6 +1,7 @@
 """Cash flow ledger for running financial simulations."""
 
 from collections.abc import Callable
+from dataclasses import dataclass
 
 import numpy as np
 from numpy.typing import NDArray
@@ -8,6 +9,20 @@ from numpy.typing import NDArray
 from ..strategies.base import BaseStrategy
 from .market import MarketSimulator
 from .models import PortfolioParams, YearState
+
+
+@dataclass(slots=True)
+class _State:
+    """Lightweight state object for vectorized simulations.
+    
+    Replaces YearState in hot paths to avoid Pydantic overhead.
+    Performance critical - modifications should be benchmarked.
+    """
+    year: int
+    age: int
+    balance: float
+    inflation: float
+    withdrawal_nominal: float | None
 
 
 class CashFlowLedger:
@@ -172,7 +187,7 @@ def run_simulation_vectorized(
     # Tax engine or no-op
     if tax_engine is None:
 
-        def tax_engine(w, b):
+        def tax_engine(w: float, b: float) -> float:
             return 0.0
 
     for path_idx in range(paths):
@@ -183,8 +198,8 @@ def run_simulation_vectorized(
             current_age = starting_age + year_idx
             market_return = returns[path_idx, year_idx]
 
-            # Create current state for strategy
-            current_state = YearState(
+            # Create current state for strategy (using lightweight dataclass)
+            current_state = _State(
                 year=current_year,
                 age=current_age,
                 balance=balance,

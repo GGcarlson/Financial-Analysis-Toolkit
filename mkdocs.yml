@@ -142,7 +142,7 @@ extra:
       link: https://pypi.org/project/capstone-finance/
   analytics:
     provider: google
-    property: !ENV GOOGLE_ANALYTICS_KEY
+    property: ${GOOGLE_ANALYTICS_KEY}
 
 # Custom CSS
 extra_css:

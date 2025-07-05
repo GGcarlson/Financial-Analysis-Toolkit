@@ -235,7 +235,7 @@ class TestCashFlowLedger:
 
         # Baseline: Time market generation alone
         start_time = time.time()
-        returns = simulator.generate(10000, 40)
+        _ = simulator.generate(10000, 40)  # Just for timing, don't need the result
         market_time = time.time() - start_time
 
         # Timed run: Full ledger simulation

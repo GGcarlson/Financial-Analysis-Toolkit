@@ -147,7 +147,7 @@ def load_shiller_data(cache_dir: Path | None = None) -> pd.DataFrame:
         cache_dir = Path.home() / ".capstone_finance" / "cache"
 
     cache_dir.mkdir(parents=True, exist_ok=True)
-    cache_file = cache_dir / "shiller_data.csv"
+    # cache_file = cache_dir / "shiller_data.csv"  # TODO: Future implementation
 
     # For now, return empty DataFrame
     # TODO: Implement actual Shiller data fetching

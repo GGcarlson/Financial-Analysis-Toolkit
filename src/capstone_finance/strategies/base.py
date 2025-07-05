@@ -1,8 +1,18 @@
 """Base class for withdrawal strategies."""
 
 from abc import ABC, abstractmethod
+from typing import Protocol
 
 from ..core.models import PortfolioParams, YearState
+
+
+class StateProtocol(Protocol):
+    """Protocol for state objects that can be used with strategies."""
+    year: int
+    age: int
+    balance: float
+    inflation: float
+    withdrawal_nominal: float | None
 
 
 class BaseStrategy(ABC):
@@ -14,7 +24,7 @@ class BaseStrategy(ABC):
 
     @abstractmethod
     def calculate_withdrawal(
-        self, state: YearState | None, params: PortfolioParams
+        self, state: StateProtocol | None, params: PortfolioParams
     ) -> float:
         """Calculate withdrawal amount for the given year state.
 
