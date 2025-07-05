@@ -8,6 +8,16 @@
 
 An extensible, agent-friendly Python toolkit that lets individuals, advisors, and autonomous LLM agents simulate personal-finance decisions—retirement withdrawals, mortgage refinancing, large purchases, etc.—with academic-quality rigor and production-grade code.
 
+## 🚀 New to This? Start Here!
+
+**👋 First time user?** Check out our [**Beginner Setup Guide**](BEGINNER_SETUP.md) for a complete step-by-step walkthrough, including:
+- Platform-specific installation (Windows, Mac, Linux)
+- Your first retirement simulation
+- Common troubleshooting solutions
+- Real examples with your own financial data
+
+**⚡ Already familiar with Python?** Jump to the [Quick Start](#-quick-start) section below.
+
 ## 🎯 Vision
 
 Build a toolkit that is:
