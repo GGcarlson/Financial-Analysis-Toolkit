@@ -1,0 +1,34 @@
+# VPW Strategy with Custom Table Example
+# This configuration demonstrates how to use a custom VPW table
+
+# Core simulation parameters
+strategy: "vpw"
+years: 35
+paths: 2000
+seed: 123
+
+# Portfolio parameters
+init_balance: 1500000.0  # $1.5M initial portfolio
+equity_pct: 0.7          # 70% equity allocation (will round to 80% table)
+fees_bps: 35             # 0.35% annual fees
+
+# Market simulation parameters
+market_mode: "lognormal"
+
+# Output parameters
+output: "vpw_custom_results.csv"
+verbose: true
+
+# VPW strategy parameters
+vpw_table_path: "examples/custom_vpw_table.yml"  # Path to custom VPW table
+
+# This example demonstrates:
+# 1. Using a custom VPW table with conservative withdrawal rates
+# 2. 70% equity allocation (will use 80% table as closest match)
+# 3. Longer simulation period (35 years)
+# 4. Higher number of paths for more robust statistics
+# 5. Custom initial balance and fee structure
+#
+# The custom table provides more conservative withdrawal rates
+# compared to the default VPW tables, which may be appropriate
+# for more risk-averse investors or uncertain market conditions.

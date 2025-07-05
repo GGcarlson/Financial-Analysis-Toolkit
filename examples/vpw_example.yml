@@ -1,0 +1,31 @@
+# Variable Percentage Withdrawal (VPW) Strategy Example
+# This configuration demonstrates how to run VPW simulations with default tables
+
+# Core simulation parameters
+strategy: "vpw"
+years: 30
+paths: 1000
+seed: 42
+
+# Portfolio parameters
+init_balance: 1000000.0  # $1M initial portfolio
+equity_pct: 0.6          # 60% equity allocation
+fees_bps: 50             # 0.5% annual fees
+
+# Market simulation parameters
+market_mode: "lognormal"
+
+# Output parameters
+output: "vpw_results.csv"
+verbose: true
+
+# VPW strategy parameters
+# vpw_table_path: null  # Use default VPW tables (uncomment to specify custom table)
+
+# Note: VPW strategy automatically adjusts withdrawal percentages based on:
+# 1. Current age (from simulation state)
+# 2. Equity allocation (from portfolio parameters)
+# 3. Current portfolio balance (from simulation state)
+#
+# The strategy includes built-in VPW tables for 20%, 40%, 60%, and 80% equity allocations.
+# Withdrawal percentages generally increase with age and decrease with higher equity allocations.

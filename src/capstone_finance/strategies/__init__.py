@@ -6,6 +6,7 @@ from .dummy import DummyStrategy
 from .endowment import EndowmentStrategy
 from .four_percent_rule import FourPercentRule
 from .guyton_klinger import GuytonKlingerStrategy
+from .vpw import VariablePercentageWithdrawal
 
 __all__ = [
     "BaseStrategy",
@@ -14,4 +15,5 @@ __all__ = [
     "EndowmentStrategy",
     "FourPercentRule",
     "GuytonKlingerStrategy",
+    "VariablePercentageWithdrawal",
 ]

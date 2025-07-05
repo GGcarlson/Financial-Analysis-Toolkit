@@ -1,0 +1,75 @@
+# Custom VPW Table Example
+# This file demonstrates the format for custom VPW tables
+
+# VPW table structure:
+# - Top level keys are equity allocation percentages (20, 40, 60, 80)
+# - Each equity allocation contains age-based withdrawal percentages
+# - Ages typically range from 45 to 95+
+# - Withdrawal percentages are specified as percentages (e.g., 3.5 for 3.5%)
+
+# Example custom VPW table with conservative withdrawal rates
+20:  # 20% equity allocation
+  45: 2.8
+  50: 2.9
+  55: 3.0
+  60: 3.2
+  65: 3.5
+  70: 4.0
+  75: 4.5
+  80: 5.2
+  85: 6.0
+  90: 7.5
+  95: 10.0
+
+40:  # 40% equity allocation
+  45: 2.5
+  50: 2.6
+  55: 2.7
+  60: 2.9
+  65: 3.2
+  70: 3.7
+  75: 4.2
+  80: 4.8
+  85: 5.6
+  90: 6.8
+  95: 8.5
+
+60:  # 60% equity allocation
+  45: 2.2
+  50: 2.3
+  55: 2.4
+  60: 2.6
+  65: 2.9
+  70: 3.3
+  75: 3.8
+  80: 4.4
+  85: 5.2
+  90: 6.2
+  95: 7.8
+
+80:  # 80% equity allocation
+  45: 2.0
+  50: 2.1
+  55: 2.2
+  60: 2.4
+  65: 2.7
+  70: 3.0
+  75: 3.4
+  80: 3.9
+  85: 4.6
+  90: 5.6
+  95: 7.0
+
+# To use this custom table:
+# 1. Save this file (e.g., as "my_vpw_table.yml")
+# 2. Reference it in your configuration:
+#    vpw_table_path: "my_vpw_table.yml"
+# 3. Or use the CLI flag:
+#    --vpw-table my_vpw_table.yml
+
+# Notes:
+# - The strategy will automatically select the closest equity allocation
+# - Ages not in the table will be interpolated or use boundary values
+# - Withdrawal percentages are capped at 10% regardless of table values
+# - Higher equity allocations typically have lower withdrawal rates
+# - Withdrawal percentages generally increase with age

@@ -90,6 +90,11 @@ class ConfigModel(BaseModel):
         0.10, gt=0, lt=1, description="Cut percentage for Guyton-Klinger strategy"
     )
 
+    # VPW strategy parameters
+    vpw_table_path: str | None = Field(
+        None, description="Path to custom VPW table YAML file"
+    )
+
     def model_post_init(self, __context) -> None:
         """Validate interdependent fields after model initialization."""
         # Validate market mode

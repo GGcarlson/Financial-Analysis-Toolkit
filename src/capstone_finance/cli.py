@@ -181,6 +181,10 @@ def retire(
     cut_pct: float | None = typer.Option(
         None, "--cut-pct", help="Cut percentage for Guyton-Klinger strategy"
     ),
+    # VPW strategy parameters
+    vpw_table_path: str | None = typer.Option(
+        None, "--vpw-table", help="Path to custom VPW table YAML file"
+    ),
 ) -> None:
     """Run retirement simulation with specified parameters."""
 
@@ -215,6 +219,7 @@ def retire(
             "guard_pct": guard_pct,
             "raise_pct": raise_pct,
             "cut_pct": cut_pct,
+            "vpw_table_path": vpw_table_path,
         }
 
         # Merge config with CLI args (CLI takes precedence)
@@ -266,6 +271,13 @@ def retire(
             guard_pct=final_config.guard_pct,
             raise_pct=final_config.raise_pct,
             cut_pct=final_config.cut_pct,
+        )
+    elif final_config.strategy == "vpw":
+        vpw_table_path = None
+        if final_config.vpw_table_path:
+            vpw_table_path = Path(final_config.vpw_table_path)
+        strategy_instance = strategies[final_config.strategy](
+            vpw_table_path=vpw_table_path
         )
     else:
         strategy_instance = strategies[final_config.strategy]()
