@@ -20,7 +20,14 @@ src/capstone_finance/
 │   ├── base.py        # BaseStrategy abstract class
 │   ├── dummy.py       # DummyStrategy (0% withdrawal)
 │   ├── four_percent_rule.py    # 4% rule with inflation adjustment
-│   └── constant_percentage.py # Constant percentage of current balance
+│   ├── constant_percentage.py # Constant percentage of current balance
+│   ├── endowment.py   # Yale endowment moving-average strategy
+│   ├── guyton_klinger.py       # Dynamic strategy with guardrails
+│   └── vpw.py         # Variable Percentage Withdrawal (age-based)
+├── reporting/         # Result analysis and visualization
+│   ├── plots.py       # Equity curve and visualization generation
+│   └── summary.py     # Statistical summaries and CSV exports
+├── config.py          # Configuration management with Pydantic
 └── cli.py             # Typer-based CLI interface
 
 tests/
@@ -28,7 +35,12 @@ tests/
 ├── strategies/        # Strategy-specific tests + property-based fuzz testing
 │   ├── property_fuzz_test.py  # Hypothesis-based tests for all strategies
 │   └── test_*.py      # Individual strategy unit tests
+├── reporting/         # Reporting module tests
 └── cli/               # CLI integration tests
+
+examples/              # Configuration examples and notebooks
+├── *.yml              # Strategy configuration examples
+└── *.ipynb            # Jupyter notebook demonstrations
 ```
 
 ## Development Commands
@@ -94,10 +106,15 @@ finance-cli list-strategies
 finance-cli retire --help
 finance-cli retire --strategy four_percent_rule --years 30 --paths 1000
 finance-cli retire --strategy constant_pct --percent 0.03 --years 25 --paths 500
-finance-cli retire --strategy dummy --years 10 --paths 100 --verbose
+finance-cli retire --strategy vpw --years 30 --paths 1000 --verbose
+finance-cli retire --strategy vpw --vpw-table examples/custom_vpw_table.yml
 
 # Export results to CSV
 finance-cli retire --strategy constant_pct --output results.csv
+
+# Use configuration files
+finance-cli retire --config examples/vpw_example.yml
+finance-cli retire --config examples/guyton_klinger_example.yml
 ```
 
 ## Strategy Plugin Architecture
@@ -116,6 +133,9 @@ finance-cli retire --strategy constant_pct --output results.csv
    dummy = "capstone_finance.strategies.dummy:DummyStrategy"
    four_percent_rule = "capstone_finance.strategies.four_percent_rule:FourPercentRule"
    constant_pct = "capstone_finance.strategies.constant_percentage:ConstantPercentageStrategy"
+   endowment = "capstone_finance.strategies.endowment:EndowmentStrategy"
+   guyton_klinger = "capstone_finance.strategies.guyton_klinger:GuytonKlingerStrategy"
+   vpw = "capstone_finance.strategies.vpw:VariablePercentageWithdrawal"
    ```
 
 3. **Strategy Discovery** (`cli.py`):
@@ -182,6 +202,22 @@ The project includes comprehensive property-based testing using Hypothesis (`tes
 - **Automatic strategy discovery**: Tests all registered strategies
 - **Parameterized execution**: Each property tested against all strategies
 
+### Strategy Classification for Property Tests
+Strategies are classified by their behavior for property-based testing bounds:
+
+```python
+# In property_fuzz_test.py
+if strategy_name in ["constant_pct", "endowment", "vpw"]:
+    # These strategies can withdraw up to 100% of current balance
+    max_reasonable = state.balance * 1.0
+else:
+    # Other strategies should not exceed 100% of initial balance per year
+    max_reasonable = params.init_balance * 1.0
+```
+
+**Current Balance Dependent**: `constant_pct`, `endowment`, `vpw`
+**Initial Balance Dependent**: `four_percent_rule`, `guyton_klinger`, `dummy`
+
 ## CLI Integration Patterns
 
 ### Strategy-Specific Parameters
@@ -189,17 +225,35 @@ The CLI handles strategy-specific parameters through conditional instantiation:
 
 ```python
 # In cli.py
-if strategy == "constant_pct":
-    strategy_instance = strategies[strategy](percentage=percent)
+if final_config.strategy == "constant_pct":
+    strategy_instance = strategies[final_config.strategy](percentage=final_config.percent)
+elif final_config.strategy == "endowment":
+    strategy_instance = strategies[final_config.strategy](
+        alpha=final_config.alpha, beta=final_config.beta, window=final_config.window
+    )
+elif final_config.strategy == "guyton_klinger":
+    strategy_instance = strategies[final_config.strategy](
+        initial_rate=final_config.initial_rate, guard_pct=final_config.guard_pct,
+        raise_pct=final_config.raise_pct, cut_pct=final_config.cut_pct
+    )
+elif final_config.strategy == "vpw":
+    vpw_table_path = Path(final_config.vpw_table_path) if final_config.vpw_table_path else None
+    strategy_instance = strategies[final_config.strategy](vpw_table_path=vpw_table_path)
 else:
-    strategy_instance = strategies[strategy]()
+    strategy_instance = strategies[final_config.strategy]()
 ```
 
 ### Adding CLI Parameters for New Strategies
 1. Add parameter to `retire()` function with `typer.Option()`
-2. Add validation in input validation section
-3. Extend strategy instantiation logic
-4. Update help text and examples
+2. Add parameter to `ConfigModel` class in `config.py`
+3. Add parameter to CLI args dictionary in `retire()` function
+4. Extend strategy instantiation logic with parameter handling
+5. Update help text and examples
+
+**Example Pattern for Custom Parameters:**
+- Simple parameters: Add to both CLI options and ConfigModel
+- File-based parameters: Handle Path conversion in strategy instantiation
+- Complex parameters: Use nested Pydantic models or YAML configuration
 
 ## Data Sources and Configuration
 
@@ -209,9 +263,36 @@ else:
 - **Modes**: "lognormal" and "bootstrap" simulation modes
 
 ### Configuration Management
-- **Pydantic models** for type safety and validation
+- **Pydantic models** for type safety and validation (`ConfigModel` in `config.py`)
 - **YAML support** via `from_yaml()` class methods on models
 - **Immutable models** with `frozen=True` for reproducibility
+- **CLI priority**: CLI arguments override config file values
+- **Configuration examples** in `examples/` directory for all strategies
+
+### Configuration File Patterns
+```yaml
+# Basic structure in examples/*.yml
+strategy: "strategy_name"
+years: 30
+paths: 1000
+seed: 42
+init_balance: 1000000.0
+equity_pct: 0.6
+fees_bps: 50
+market_mode: "lognormal"
+output: "results.csv"
+verbose: true
+
+# Strategy-specific parameters
+strategy_param: value
+custom_file_path: "path/to/file.yml"
+```
+
+**Available Examples:**
+- `vpw_example.yml`: Variable Percentage Withdrawal with default tables
+- `vpw_custom_example.yml`: VPW with custom table file
+- `guyton_klinger_example.yml`: Dynamic withdrawal with guardrails
+- `retirement_basic.yml` / `retirement_advanced.yml`: General configurations
 
 ## Performance and Determinism
 
